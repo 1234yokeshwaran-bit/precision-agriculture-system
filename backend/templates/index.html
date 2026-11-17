@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precision Agriculture | Smart Farming Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--green:#17613c;--green2:#268451;--pale:#eaf4ec;--bg:#f3f7f3;--ink:#20352a;--muted:#6c7d72;--line:#e2ebe4;--white:#fff;--red:#a83b3b;--shadow:0 8px 28px rgba(23,60,38,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+header{background:linear-gradient(120deg,#12452e,#247b4c);color:white;padding:22px max(22px,calc((100% - 1300px)/2));display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.brand h1{font-size:24px;margin:0}.brand p{margin:6px 0 0;color:#d6ebdc;font-size:13px}
+.status{font-size:12px;background:#ffffff20;border:1px solid #ffffff35;padding:9px 13px;border-radius:30px}
+main{max-width:1300px;margin:auto;padding:25px 20px 50px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:22px 0 14px}
+h2{font-size:19px;margin:0}.muted{color:var(--muted);font-size:13px}
+.grid{display:grid;gap:16px}.sensors{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card,.panel{background:var(--white);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}
+.sensor{padding:20px;border-left:4px solid var(--green2)}.sensor .label{font-size:13px;color:var(--muted)}.sensor .value{font-size:30px;font-weight:750;color:var(--green);margin:12px 0 4px}.unit{font-size:12px;color:var(--muted)}
+.panel{padding:20px;margin-top:17px}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+button,select,input{font:inherit}button{background:var(--green2);border:0;color:white;padding:10px 14px;border-radius:9px;cursor:pointer;font-weight:600}button:hover{background:var(--green)}
+button.secondary{background:#e8f2ea;color:var(--green)}button.secondary:hover{background:#d9eadc}
+select,input{border:1px solid #d6e2d8;border-radius:9px;padding:10px;background:white;color:var(--ink)}
+.chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.chart-box{border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}.chart-box h3{font-size:14px;margin:0 0 12px}.chart-box canvas{width:100%;height:230px;max-height:230px}
+.stats{grid-template-columns:repeat(5,minmax(0,1fr))}.stat{padding:15px}.stat span{font-size:12px;color:var(--muted)}.stat strong{display:block;font-size:22px;margin-top:8px;color:var(--green)}
+.crop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.crop{padding:16px;border:1px solid var(--line);border-radius:12px}.crop-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.crop h3{font-size:16px;margin:0}.pill{font-size:12px;color:#17613c;background:#e7f4e9;border-radius:20px;padding:7px 9px;font-weight:700}.bar{height:8px;border-radius:20px;background:#e9efea;margin:14px 0;overflow:hidden}.bar i{display:block;height:100%;background:#43a36a}.crop p{font-size:12px;color:var(--muted);line-height:1.7;margin:0}
+.compare-controls{display:flex;gap:10px;flex-wrap:wrap}.compare-table{width:100%;border-collapse:collapse;font-size:13px}.compare-table th,.compare-table td{text-align:left;padding:11px;border-bottom:1px solid var(--line)}.compare-table th{color:var(--muted);font-weight:600}
+.notice{padding:12px 14px;border-radius:10px;background:#fff7e7;color:#795519;font-size:13px;line-height:1.5}.error{color:var(--red)}.empty{color:var(--muted);font-size:13px;padding:12px 0}
+.actions{display:flex;gap:9px;flex-wrap:wrap}
+.chat-launch{position:fixed;right:22px;bottom:22px;width:60px;height:60px;border-radius:50%;font-size:24px;box-shadow:0 8px 25px #164b2c55;z-index:20}
+.chat{position:fixed;right:22px;bottom:94px;width:min(390px,calc(100vw - 28px));height:520px;max-height:70vh;background:white;border:1px solid var(--line);border-radius:17px;box-shadow:0 15px 55px #122d1e35;display:none;flex-direction:column;overflow:hidden;z-index:20}
+.chat.open{display:flex}.chat-head{background:var(--green);color:white;padding:15px;display:flex;justify-content:space-between;align-items:center}.chat-head small{display:block;color:#d8eadf;margin-top:4px}.chat-head button{background:#ffffff22;padding:6px 10px}
+.chat-messages{padding:14px;overflow:auto;flex:1;background:#f8fbf8}.bubble{padding:10px 12px;border-radius:12px;margin:8px 0;max-width:90%;font-size:13px;line-height:1.5;white-space:pre-wrap}.bot{background:#eaf3ec;margin-right:auto}.user{background:#d8ecdf;margin-left:auto}.chat-form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}.chat-form input{min-width:0;flex:1}.chat-form button{padding:10px 13px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
+@media(max-width:900px){.sensors{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){main{padding:15px 12px 40px}.sensors,.chart-grid,.crop-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}header{padding:18px}.sensor .value{font-size:26px}.panel{padding:15px}.chart-box canvas{height:210px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><h1>🌱 Precision Agriculture</h1><p>Interactive Smart Farming Monitoring & Decision Support</p></div>
+  <div class="status" id="connectionStatus">● Connecting to backend...</div>
+</header>
+
+<main>
+  <div class="section-head"><div><h2>Live Sensor Monitoring</h2><div class="muted">Latest readings from your ESP32</div></div><div class="muted" id="lastUpdated">Waiting for data...</div></div>
+  <section class="grid sensors">
+    <div class="card sensor"><div class="label">🌡 Temperature</div><div class="value" id="temperature">--</div><div class="unit">°C</div></div>
+    <div class="card sensor"><div class="label">💧 Air Humidity</div><div class="value" id="humidity">--</div><div class="unit">%</div></div>
+    <div class="card sensor"><div class="label">🌿 Soil Moisture</div><div class="value" id="moisture">--</div><div class="unit">%</div></div>
+    <div class="card sensor"><div class="label">🧪 Soil pH</div><div class="value" id="ph">--</div><div class="unit">pH</div></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2>Sensor Analytics</h2><div class="muted">Historical trends stored in MySQL</div></div>
+      <div class="actions"><select id="rangeSelect" onchange="loadAnalytics()"><option value="24">Last 24 hours</option><option value="6">Last 6 hours</option><option value="168">Last 7 days</option><option value="720">Last 30 days</option></select><button class="secondary" onclick="downloadReport()">Download CSV report</button></div>
+    </div>
+    <div class="grid stats">
+      <div class="card stat"><span>Readings stored</span><strong id="statCount">--</strong></div>
+      <div class="card stat"><span>Average temperature</span><strong id="statTemp">--</strong></div>
+      <div class="card stat"><span>Average humidity</span><strong id="statHumidity">--</strong></div>
+      <div class="card stat"><span>Average soil moisture</span><strong id="statMoisture">--</strong></div>
+      <div class="card stat"><span>Average soil pH</span><strong id="statPh">--</strong></div>
+    </div>
+    <div class="chart-grid" style="margin-top:16px">
+      <div class="chart-box"><h3>Temperature (°C)</h3><canvas id="tempChart"></canvas></div>
+      <div class="chart-box"><h3>Air Humidity (%)</h3><canvas id="humidityChart"></canvas></div>
+      <div class="chart-box"><h3>Soil Moisture (%)</h3><canvas id="moistureChart"></canvas></div>
+      <div class="chart-box"><h3>Soil pH</h3><canvas id="phChart"></canvas></div>
+    </div>
+    <p class="muted" id="historyMessage" style="margin-bottom:0"></p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2>Crop Recommendations</h2><div class="muted">Top matches from your crop dataset</div></div><button onclick="loadRecommendations()">Refresh recommendations</button></div>
+    <div id="recommendationNotice"></div>
+    <div class="grid crop-grid" id="cropList"><div class="empty">Loading crop recommendations...</div></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2>Crop Comparison</h2><div class="muted">Compare growing requirements for selected crops</div></div></div>
+    <div class="compare-controls">
+      <input id="cropSearch" placeholder="Search crop name..." oninput="loadCropOptions()">
+      <select id="cropOne"><option value="">Choose first crop</option></select>
+      <select id="cropTwo"><option value="">Choose second crop</option></select>
+      <button onclick="compareCrops()">Compare crops</button>
+    </div>
+    <div id="comparisonResult" style="overflow-x:auto;margin-top:15px"><p class="empty">Choose two crops to compare their requirements.</p></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2>System Information</h2><div class="muted">Project connection details</div></div></div>
+    <p class="muted">Database: precision_agriculture · Sensor: ESP32 USB Serial · Backend: Python Flask · Crop records: 282 (verify against your database)</p>
+    <div class="notice" style="margin-top:12px">Sensor readings and crop match scores are decision-support information. Confirm sensor calibration and local agronomic advice before making field decisions.</div>
+  </section>
+</main>
+
+<footer>Interactive System for Precision Agriculture</footer>
+
+<button class="chat-launch" onclick="toggleChat()" title="Open AI Agriculture Assistant">🤖</button>
+<div class="chat" id="chatPanel">
+  <div class="chat-head"><div><strong>AI Agriculture Assistant</strong><small>Ask about your readings and crops</small></div><button onclick="toggleChat()">✕</button></div>
+  <div class="chat-messages" id="chatMessages"><div class="bubble bot">Hello! I'm your agriculture assistant. Ask me about soil conditions, crop requirements, or your latest sensor readings.</div></div>
+  <form class="chat-form" onsubmit="sendChat(event)"><input id="chatInput" maxlength="2000" placeholder="Ask an agriculture question..." autocomplete="off"><button id="chatSend">Send</button></form>
+</div>
+
+<script>
+const byId = id => document.getElementById(id);
+let charts = {};
+
+function numberText(value, suffix="") {
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(1) + suffix : "--";
+}
+function createChart(id, label, labels, values) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(byId(id), {
+    type: "line",
+    data: { labels, datasets: [{ label, data: values, borderColor: "#268451", backgroundColor: "rgba(38,132,81,.12)", fill: true, tension: .28, pointRadius: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { maxTicksLimit: 7, maxRotation: 0 } }, y: { beginAtZero: false } } }
+  });
+}
+
+async function loadLatest() {
+  try {
+    const r = await fetch("/api/latest");
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "No sensor data");
+    byId("temperature").textContent = numberText(d.temperature);
+    byId("humidity").textContent = numberText(d.humidity);
+    byId("moisture").textContent = numberText(d.soil_moisture);
+    byId("ph").textContent = numberText(d.soil_ph, "");
+    byId("lastUpdated").textContent = "Last recorded: " + d.recorded_at;
+    byId("connectionStatus").textContent = "● Backend & database connected";
+    byId("connectionStatus").style.background = "#ffffff20";
+  } catch (e) {
+    byId("connectionStatus").textContent = "● Sensor/database issue";
+    byId("connectionStatus").style.background = "#8e3737";
+    byId("lastUpdated").textContent = e.message;
+  }
+}
+
+async function loadAnalytics() {
+  const hours = byId("rangeSelect").value;
+  try {
+    const [hr, sr] = await Promise.all([
+      fetch(`/api/history?hours=${hours}`), fetch(`/api/stats?hours=${hours}`)
+    ]);
+    const history = await hr.json(), stats = await sr.json();
+    if (!hr.ok) throw new Error(history.error || "History unavailable");
+    const rows = history.readings || [];
+    const labels = rows.map(x => x.recorded_at);
+    createChart("tempChart", "Temperature", labels, rows.map(x => Number(x.temperature)));
+    createChart("humidityChart", "Humidity", labels, rows.map(x => Number(x.humidity)));
+    createChart("moistureChart", "Soil moisture", labels, rows.map(x => Number(x.soil_moisture)));
+    createChart("phChart", "Soil pH", labels, rows.map(x => Number(x.soil_ph)));
+    byId("statCount").textContent = stats.readings_count ?? 0;
+    byId("statTemp").textContent = numberText(stats.avg_temperature, " °C");
+    byId("statHumidity").textContent = numberText(stats.avg_humidity, " %");
+    byId("statMoisture").textContent = numberText(stats.avg_soil_moisture, " %");
+    byId("statPh").textContent = numberText(stats.avg_soil_ph);
+    byId("historyMessage").textContent = `${rows.length} readings found in the selected period.`;
+  } catch (e) { byId("historyMessage").textContent = e.message; }
+}
+
+function downloadReport() {
+  const hours = byId("rangeSelect").value;
+  window.location.href = `/api/export?hours=${hours}`;
+}
+
+async function loadRecommendations() {
+  const notice = byId("recommendationNotice"), list = byId("cropList");
+  notice.innerHTML = ""; list.innerHTML = '<p class="empty">Calculating crop matches...</p>';
+  try {
+    const r = await fetch("/api/recommendations"), d = await r.json();
+    if (!r.ok) throw new Error(d.message || d.error || "Recommendations unavailable");
+    list.innerHTML = "";
+    notice.innerHTML = `<p class="muted">Compared ${d.total_crops_compared} crops against the latest valid sensor readings. Scores are relative similarity scores, not probabilities.</p>`;
+    (d.recommendations || []).forEach(c => {
+      const score = Math.max(0, Math.min(100, Number(c.match_score) || 0));
+      const card = document.createElement("div"); card.className = "crop";
+      const top = document.createElement("div"); top.className = "crop-top";
+      const title = document.createElement("h3"); title.textContent = "🌾 " + c.crop;
+      const pill = document.createElement("span"); pill.className = "pill"; pill.textContent = score.toFixed(1) + "% match";
+      top.append(title, pill);
+      const bar = document.createElement("div"); bar.className = "bar";
+      const fill = document.createElement("i"); fill.style.width = score + "%"; bar.append(fill);
+      const p = document.createElement("p");
+      p.textContent = `Moisture: ${c.required_moisture}% · Soil pH: ${c.required_soil_ph} · Temperature: ${c.required_temperature} °C`;
+      card.append(top, bar, p); list.append(card);
+    });
+    if (!d.recommendations.length) list.innerHTML = '<p class="empty">No recommendations returned.</p>';
+  } catch (e) {
+    list.innerHTML = "";
+    notice.innerHTML = `<div class="notice error">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+
+async function loadCropOptions() {
+  try {
+    const q = encodeURIComponent(byId("cropSearch").value.trim());
+    const r = await fetch(`/api/crops?q=${q}`), d = await r.json();
+    if (!r.ok) throw new Error(d.error || "Could not load crops");
+    for (const id of ["cropOne", "cropTwo"]) {
+      const select = byId(id), old = select.value;
+      select.innerHTML = `<option value="">Choose ${id === "cropOne" ? "first" : "second"} crop</option>`;
+      d.crops.forEach(c => {
+        const op = document.createElement("option"); op.value = c.crop; op.textContent = c.crop; select.append(op);
+      });
+      if ([...select.options].some(o => o.value === old)) select.value = old;
+    }
+  } catch (e) { byId("comparisonResult").textContent = e.message; }
+}
+
+async function compareCrops() {
+  const a = byId("cropOne").value, b = byId("cropTwo").value;
+  const out = byId("comparisonResult");
+  if (!a || !b) { out.innerHTML = '<p class="empty">Please select two crops.</p>'; return; }
+  if (a === b) { out.innerHTML = '<p class="empty">Choose two different crops.</p>'; return; }
+  try {
+    const r = await fetch("/api/crops"), d = await r.json();
+    const rows = d.crops.filter(c => c.crop === a || c.crop === b);
+    if (rows.length !== 2) throw new Error("Could not find both crops. Search and select again.");
+    out.innerHTML = `<table class="compare-table"><thead><tr><th>Growing condition</th><th>${escapeHtml(a)}</th><th>${escapeHtml(b)}</th></tr></thead><tbody>
+      <tr><td>Moisture (%)</td><td>${rows.find(x=>x.crop===a).moisture}</td><td>${rows.find(x=>x.crop===b).moisture}</td></tr>
+      <tr><td>Soil pH</td><td>${rows.find(x=>x.crop===a).soil_ph}</td><td>${rows.find(x=>x.crop===b).soil_ph}</td></tr>
+      <tr><td>Temperature (°C)</td><td>${rows.find(x=>x.crop===a).temperature}</td><td>${rows.find(x=>x.crop===b).temperature}</td></tr>
+    </tbody></table>`;
+  } catch (e) { out.textContent = e.message; }
+}
+
+function toggleChat() { byId("chatPanel").classList.toggle("open"); if (byId("chatPanel").classList.contains("open")) byId("chatInput").focus(); }
+function addBubble(text, who) { const el = document.createElement("div"); el.className = "bubble " + who; el.textContent = text; byId("chatMessages").append(el); byId("chatMessages").scrollTop = byId("chatMessages").scrollHeight; }
+
+async function sendChat(event) {
+  event.preventDefault();
+  const input = byId("chatInput"), message = input.value.trim();
+  if (!message) return;
+  addBubble(message, "user"); input.value = "";
+  const send = byId("chatSend"); send.disabled = true; send.textContent = "...";
+  try {
+    const r = await fetch("/api/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({message})});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "Chat request failed");
+    addBubble(d.answer, "bot");
+  } catch (e) { addBubble(e.message, "bot"); }
+  finally { send.disabled = false; send.textContent = "Send"; input.focus(); }
+}
+
+async function refreshAll() {
+  await Promise.all([loadLatest(), loadAnalytics(), loadRecommendations()]);
+}
+refreshAll();
+loadCropOptions();
+setInterval(loadLatest, 5000);
+setInterval(loadAnalytics, 60000);
+setInterval(loadRecommendations, 60000);
+</script>
+</body>
+</html>

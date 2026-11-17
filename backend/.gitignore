@@ -1,0 +1,19 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Private credentials
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+
+# Local configuration
+config_local.py
+
+# Logs
+*.log
